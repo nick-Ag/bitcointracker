@@ -1,5 +1,6 @@
 package nickaguilar.org.websockettester;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,11 +19,12 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 
+import java.text.DecimalFormat;
 
 
 public class MainActivity extends AppCompatActivity {
     private Button start;
-    private TextView txtOutput, txtCostBasis, txtCurrentOwned, txtProfit;
+    private TextView txtOutput, txtCostBasis, txtCurrentOwned, txtProfit, txtAmountOwned;
     private OkHttpClient client;
 
     private final class EchoWebSocketListener extends WebSocketListener {
@@ -71,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         txtOutput = (TextView) findViewById(R.id.price);
             txtOutput.setText("Price: ");
         txtCostBasis = (TextView)findViewById(R.id.txtCostBasis);
+        txtAmountOwned = (TextView)findViewById(R.id.txtAmountOwned);
         txtCurrentOwned = (TextView)findViewById(R.id.txtValue);
         txtProfit = (TextView)findViewById(R.id.txtProfit);
 
@@ -96,23 +99,37 @@ public class MainActivity extends AppCompatActivity {
     double profit = 0;
     double dPrice = 0;
 
+    DecimalFormat number = new DecimalFormat("###,###.00");
     private void output(final String txt) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if(!txt.equals(lastPrice)) {
-                    txtOutput.setText("Price: $" + txt);
+
                     if(!txt.equals("")) {
                         dPrice = Double.parseDouble(txt);
+                        txtOutput.setText("Price: $" + number.format(dPrice));
+
+                        if(!lastPrice.equals("")) {
+
+                            if (dPrice > Double.parseDouble(lastPrice)) {
+                                txtOutput.setTextColor(Color.GREEN);
+                            } else if (dPrice < Double.parseDouble(lastPrice)) {
+                                txtOutput.setTextColor(Color.RED);
+                            }
+                        }
+
+
 
 
                         //calculateStatistics(txt);
                         currentValue = currentOwned * dPrice;
                         profit = currentValue - costBasis;
 
-                        txtCostBasis.setText("Cost Basis: " + String.valueOf(costBasis));
-                        txtCurrentOwned.setText("Current Value: " + String.valueOf(currentValue));
-                        txtProfit.setText("Profit: " + String.valueOf(profit));
+                        txtCostBasis.setText("Cost Basis: " + number.format(costBasis));
+                        txtAmountOwned.setText("BTC Owned: " + currentOwned);
+                        txtCurrentOwned.setText("Current Value: $" + number.format(currentValue));
+                        txtProfit.setText("Profit: $" + number.format(profit));
 
                         currentValue = 0;
                         profit = 0;
