@@ -23,7 +23,6 @@ import java.text.DecimalFormat;
 
 
 public class MainActivity extends AppCompatActivity {
-    private Button start;
     private TextView txtOutput, txtCostBasis, txtCurrentOwned, txtProfit, txtAmountOwned;
     private OkHttpClient client;
 
@@ -65,11 +64,11 @@ public class MainActivity extends AppCompatActivity {
             output("Error : " + t.getMessage());
         }
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        start = (Button) findViewById(R.id.start);
         txtOutput = (TextView) findViewById(R.id.price);
             txtOutput.setText("Price: ");
         txtCostBasis = (TextView)findViewById(R.id.txtCostBasis);
@@ -78,19 +77,12 @@ public class MainActivity extends AppCompatActivity {
         txtProfit = (TextView)findViewById(R.id.txtProfit);
 
         client = new OkHttpClient();
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                start();
-            }
-        });
-    }
-    private void start() {
         Request request = new Request.Builder().url("wss://ws-feed.gdax.com").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         WebSocket ws = client.newWebSocket(request, listener);
-        //client.dispatcher().executorService().shutdown();
+
     }
+
     String lastPrice = "";
 
     final double currentOwned = 0.1450855;
@@ -118,9 +110,6 @@ public class MainActivity extends AppCompatActivity {
                                 txtOutput.setTextColor(Color.RED);
                             }
                         }
-
-
-
 
                         //calculateStatistics(txt);
                         currentValue = currentOwned * dPrice;
