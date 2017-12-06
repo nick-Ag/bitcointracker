@@ -22,7 +22,7 @@ import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
     //create new global view objects to use in the app
-    private TextView txtPrice, txtCostBasis, txtValue, txtProfit, txtAmountOwned;
+    private TextView txtPrice, txtCostBasis, txtValue, txtProfit, txtAmountOwned, txtPercentProfit;
     private OkHttpClient client; //creates a OkHttpClient object to use in various places
 
     //This class handles communications with the websocket
@@ -77,12 +77,19 @@ public class MainActivity extends AppCompatActivity {
 
         //initializes each view
         txtPrice = (TextView) findViewById(R.id.price);
-            txtPrice.setText("Price: ");
-
         txtCostBasis = (TextView)findViewById(R.id.txtCostBasis);
         txtAmountOwned = (TextView)findViewById(R.id.txtAmountOwned);
         txtValue = (TextView)findViewById(R.id.txtValue);
         txtProfit = (TextView)findViewById(R.id.txtProfit);
+        txtPercentProfit = (TextView)findViewById(R.id.txtPercentProfit);
+
+        //Initialize each textView with loading text
+        txtPrice.setText("Price: Loading...");
+        txtCostBasis.setText("Cost Basis: Loading...");
+        txtAmountOwned.setText("BTC Owned: Loading...");
+        txtValue.setText("Current Total Value: Loading...");
+        txtProfit.setText("Current Profit: Loading...");
+        txtPercentProfit.setText("% Profit: Loading...");
 
         //initializes the client, and connects to the websocket
         client = new OkHttpClient();
@@ -92,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     String lastPrice = ""; //holds the last price of BTC to compare to the new price
     final double currentOwned = 0.1450855; //hardcoded values for amount owned and cost basis, will change
     final double costBasis = 1000;          //to be user defined
@@ -100,7 +106,9 @@ public class MainActivity extends AppCompatActivity {
     double currentValue = 0;
     double profit = 0;
     double dPrice = 0;
-    //Deciemel format object initialized to eventually format money values to look nice
+    double percentProfit = 0;
+
+    //Decimal format object initialized to eventually format money values to look nice
     DecimalFormat number = new DecimalFormat("###,###.00");
 
     private void output(final String txt) { //this method handles all processing when a new price is received
@@ -124,12 +132,14 @@ public class MainActivity extends AppCompatActivity {
                     //calculate the profits and value and output that all
                     currentValue = currentOwned * dPrice; //current total value of investment is the current price * amount owned
                     profit = currentValue - costBasis; //current profit is current value - initial costs
+                    percentProfit = 100 * ( (currentValue - costBasis) / costBasis );
 
                     //set all the views to reflect the new calculated values
-                    txtCostBasis.setText("Cost Basis: $" + number.format(costBasis));
-                    txtAmountOwned.setText("BTC Owned: " + currentOwned);
-                    txtValue.setText("Current Value: $" + number.format(currentValue));
-                    txtProfit.setText("Profit: $" + number.format(profit));
+                    txtCostBasis.setText("Cost Basis:\t\t $" + number.format(costBasis));
+                    txtAmountOwned.setText("BTC Owned:\t\t " + currentOwned);
+                    txtValue.setText("Current Value:\t\t $" + number.format(currentValue));
+                    txtProfit.setText("Profit:\t\t $" + number.format(profit));
+                    txtPercentProfit.setText("% Profit:\t\t " + number.format(percentProfit) + "%");
 
                     //idk if these are needed
                     currentValue = 0;
@@ -150,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void btnAdd_onClick(View oView){
         Intent oIntent = new Intent("org.nickaguilar.websockettester.addNewActivity");
+        startActivity(oIntent);
     }
 
 }
