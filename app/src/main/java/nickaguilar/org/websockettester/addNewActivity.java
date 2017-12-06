@@ -33,8 +33,7 @@ public class addNewActivity extends Activity {
         }
         else{
             Log.d("Status", "Else");
-            Intent oIntent = new Intent("org.nickaguilar.websockettester.MainActivity");
-            startActivity(oIntent);
+            finish();
         }
 
 
