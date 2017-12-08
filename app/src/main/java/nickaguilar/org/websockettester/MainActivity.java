@@ -1,11 +1,18 @@
 package nickaguilar.org.websockettester;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ImageButton;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -24,6 +31,10 @@ public class MainActivity extends AppCompatActivity {
     //create new global view objects to use in the app
     private TextView txtPrice, txtCostBasis, txtValue, txtProfit, txtAmountOwned, txtPercentProfit;
     private OkHttpClient client; //creates a OkHttpClient object to use in various places
+    DBManager db;
+
+    double currentOwned = 0;
+    double costBasis = 0;
 
     //This class handles communications with the websocket
     private final class EchoWebSocketListener extends WebSocketListener {
@@ -97,11 +108,63 @@ public class MainActivity extends AppCompatActivity {
         EchoWebSocketListener listener = new EchoWebSocketListener();
         WebSocket ws = client.newWebSocket(request, listener);
 
+        //instantiates db
+        db = new DBManager(this);
+
+        //Gets the current stored purchase details
+        processDataBaseItems();
+
+        //testing dynamically adding rows to table layout//
+        TableLayout table = (TableLayout)findViewById(R.id.tableMain);
+        TableRow row = new TableRow(this);
+        TableRow.LayoutParams layout = new TableRow.LayoutParams(TableRow.LayoutParams.FILL_PARENT);
+        layout.gravity = Gravity.CENTER;
+        row.setLayoutParams(layout);
+
+        //testing how to layout the table programmatically
+        TextView viewAmountBought = new TextView(this);
+            viewAmountBought.setText("100t");
+        TextView viewCostBasis = new TextView(this);
+            viewCostBasis.setText("10,000t");
+        TextView viewDate = new TextView(this);
+            viewDate.setText("12/07/2017");
+        Button deleteButton = new Button(this);
+            deleteButton.setText("Delete");
+        row.addView(viewAmountBought);
+        row.addView(viewCostBasis);
+        row.addView(viewDate);
+        row.addView(deleteButton);
+
+        table.addView(row);
+
+
+    }
+
+    //method will open the database, then retrieve all records. It will sum the amount of bitcoin bought, and the amount the user has spent on that bitcoin
+    public void processDataBaseItems(){
+        db.open();
+
+        currentOwned = 0;
+        costBasis = 0;
+
+        Cursor c = db.getAllRecords();
+        if(c.moveToFirst()){
+            while(c.moveToNext()){
+                if(!c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the string is not empty...
+                    currentOwned += Double.parseDouble(c.getString(c.getColumnIndex("amountBought"))); // sum each purchase
+                    costBasis += Double.parseDouble(c.getString(c.getColumnIndex("costBasis")));
+                }
+            }
+        }
+        Log.d("Debug", String.valueOf(currentOwned));
+        Log.d("Debug", String.valueOf(costBasis));
+
+        db.close();
     }
 
     String lastPrice = ""; //holds the last price of BTC to compare to the new price
-    final double currentOwned = 0.1450855; //hardcoded values for amount owned and cost basis, will change
-    final double costBasis = 1000;          //to be user defined
+//    final double currentOwned = 0.1450855; //hardcoded values for amount owned and cost basis, will change
+//    final double costBasis = 1000;          //to be user defined
     //initializes value, profits, and price to 0
     double currentValue = 0;
     double profit = 0;
@@ -160,7 +223,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void btnAdd_onClick(View oView){
         Intent oIntent = new Intent("org.nickaguilar.websockettester.addNewActivity");
-        startActivity(oIntent);
+        startActivityForResult(oIntent, 1);
+    }
+
+    //When the addNewActivity finishes, this method fires
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if(resultCode == 0){ //if the user entered values for cost and amount bought...
+            Log.d("Debug", "inside onActivityResult");
+            processDataBaseItems();
+        }
     }
 
 }
