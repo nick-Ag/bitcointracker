@@ -4,9 +4,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewManager;
@@ -32,6 +35,8 @@ import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
     //create new global view objects to use in the app
+    public String currentCurrencyViewed = "bitcoincash";
+
     private TextView txtPrice, txtCostBasis, txtValue, txtProfit, txtAmountOwned, txtPercentProfit;
     private OkHttpClient client; //creates a OkHttpClient object to use in various places
     DBManager db;
@@ -51,23 +56,36 @@ public class MainActivity extends AppCompatActivity {
         //onOpen method is responsible for sending a message once the connection is established
         public void onOpen(WebSocket webSocket, Response response) {
             //sends the gdax websocket the subscription message
-            webSocket.send("{\"type\": \"subscribe\",\"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"BTC-USD\"] }]}");
+            String currencyCodeForMessage = "BTC";
+
+            switch (currentCurrencyViewed){
+                case "bitcoin":
+                    currencyCodeForMessage = "BTC";
+                    break;
+                case "ethereum":
+                    currencyCodeForMessage = "ETH";
+                    break;
+                case "bitcoincash":
+                    currencyCodeForMessage = "BCH";
+                    break;
+            }
+            webSocket.send("{\"type\": \"subscribe\",\"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"" + currencyCodeForMessage + "-USD\"] }]}");
         }
 
         @Override
         //handles what to do when a message is recieved from the websocket
         public void onMessage(WebSocket webSocket, String text) {
-            String price = "", time = ""; //two strings initialized to hold key values from the JSON recieved from the websocket
+            String price = "", time = "", product_id = ""; //three strings initialized to hold key values from the JSON recieved from the websocket
 
             try {
                 JSONObject json = new JSONObject(text); //use a JSONObject to parse thru the JSON and grab a couple values
                 price = json.getString("price"); //get the price value and store it in a string
                 time = json.getString("time"); //get the time value
-
+                product_id = json.getString("product_id");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            Log.d("Status", price + " " + time); //log the 2 key values recieved from the websocket to the log
+            Log.d("Status", product_id + "" + price + " " + time); //log the 2 key values recieved from the websocket to the log
 
             //the first message recieved from the websocket generally has a null value for price
             //this makes sure that a null value isn't passed on, which would eventually cause a null string exception when things get calculated
@@ -93,6 +111,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //currentCurrencyViewed = "bitcoin";
+
         //initializes each view
         txtPrice = (TextView) findViewById(R.id.price);
         txtCostBasis = (TextView) findViewById(R.id.txtCostBasis);
@@ -111,15 +131,48 @@ public class MainActivity extends AppCompatActivity {
 
         //initializes the client, and connects to the websocket
         client = new OkHttpClient();
-        Request request = new Request.Builder().url("wss://ws-feed.gdax.com").build();
-        EchoWebSocketListener listener = new EchoWebSocketListener();
-        WebSocket ws = client.newWebSocket(request, listener);
+        final Request request = new Request.Builder().url("wss://ws-feed.gdax.com").build();
+        final EchoWebSocketListener listener = new EchoWebSocketListener();
+        final WebSocket ws = client.newWebSocket(request, listener);
 
         //instantiates db
         db = new DBManager(this);
 
         //Gets the current stored purchase details
         processDataBaseItems();
+
+        //set up the bottom navigation bars on click listener
+        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_nav);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener
+                (new BottomNavigationView.OnNavigationItemSelectedListener(){
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item){
+
+                        switch (item.getItemId()){
+                            case R.id.menu_btc:
+                                //stuff
+                                currentCurrencyViewed = "bitcoin";
+                                client.dispatcher().cancelAll();
+                                client.newWebSocket(request, listener);
+                                break;
+                            case R.id.menu_bcash:
+                                //stuff
+                                currentCurrencyViewed = "bitcoincash";
+                                client.dispatcher().cancelAll();
+                                client.newWebSocket(request, listener);
+                                break;
+                            case R.id.menu_eth:
+                                //more stuff
+                                currentCurrencyViewed = "ethereum";
+                                client.dispatcher().cancelAll();
+                                client.newWebSocket(request, listener);
+                                break;
+                        }
+                        Log.d("Currency", currentCurrencyViewed);
+                        return true;
+                    }
+                });
     }
 
     //method will open the database, then retrieve all records. It will sum the amount of bitcoin bought, and the amount the user has spent on that bitcoin
@@ -134,7 +187,8 @@ public class MainActivity extends AppCompatActivity {
         Cursor c = db.getAllRecords();
         if (c.moveToFirst()) {
             while (c.moveToNext()) {
-                if (!c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the string is not empty...
+                if ( c.getString(c.getColumnIndex("currency")).equals(currentCurrencyViewed)
+                        && !c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the record is the same as currentViewedCurrency and is not null
 
                     currentOwned += Double.parseDouble(c.getString(c.getColumnIndex("amountBought"))); // sum each purchase
                     costBasis += Double.parseDouble(c.getString(c.getColumnIndex("costBasis")));
@@ -215,7 +269,13 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (!txt.equals(lastPrice)) { //if the price is the same as the last price processed, do nothing and save some processing power
 
-                    dPrice = Double.parseDouble(txt); //hold the incoming price as a double
+                    try {
+                        dPrice = Double.parseDouble(txt); //hold the incoming price as a double
+                    }
+                    catch (java.lang.NumberFormatException e){
+                        return;
+                    }
+
                     txtPrice.setText("Price: $" + number.format(dPrice)); //set the text to the new price
 
                     if (!lastPrice.equals("")) { //if the last price is null, dont do anything
@@ -257,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void btnAdd_onClick(View oView) {
         Intent oIntent = new Intent("org.nickaguilar.websockettester.addNewActivity");
+        oIntent.putExtra("currency", currentCurrencyViewed);
         startActivityForResult(oIntent, 1);
     }
 

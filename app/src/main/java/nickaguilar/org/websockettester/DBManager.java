@@ -16,6 +16,7 @@ import android.util.Log;
 public class DBManager {
 
     static final String KEY_ROWID = "_id";
+    static final String KEY_CURRENCY = "currency"; //which currency the record holds
     static final String KEY_AMOUNTBOUGHT = "amountBought";
     static final String KEY_COSTBASIS = "costBasis";
     static final String KEY_FEE = "fee";
@@ -28,7 +29,7 @@ public class DBManager {
     static final String DATABASE_TABLE = "purchaseHistory";
     static final int DATABASE_VERSION = 1;
     static final String DATABASE_CREATE =
-            "create table "+ DATABASE_TABLE +" (_id integer primary key autoincrement, "
+            "create table "+ DATABASE_TABLE +" (_id integer primary key autoincrement, currency text not null, "
                     + "amountBought text not null, costBasis text not null, fee text not null, purchasePrice text not null," +
                     "time text, date text);"; // this string is SQL code
             //the contacts line^ is the name of the table| name is the name of a field| autoincrement function will automatically assign a number to id
@@ -75,9 +76,10 @@ public class DBManager {
         DBHelper.close(); //this closes the connection
     }
 
-    public long newPurchase(String amountBought, String costBasis, String fee, String purchasePrice, String time, String date){
+    public long newPurchase(String currency, String amountBought, String costBasis, String fee, String purchasePrice, String time, String date){
 
         ContentValues initialValues = new ContentValues();
+        initialValues.put(KEY_CURRENCY, currency);
         initialValues.put(KEY_AMOUNTBOUGHT, amountBought);
         initialValues.put(KEY_COSTBASIS, costBasis);
         initialValues.put(KEY_FEE, fee);
@@ -98,11 +100,11 @@ public class DBManager {
     }
     //get all records
     public Cursor getAllRecords(){ //returns a cursor so that the database can be iterated thru
-        return db.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_AMOUNTBOUGHT, KEY_COSTBASIS, KEY_FEE, KEY_PURCHASEPRICE, KEY_TIME, KEY_DATE}, null, null, null, null, null);
-    }
+        return db.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_CURRENCY, KEY_AMOUNTBOUGHT, KEY_COSTBASIS, KEY_FEE, KEY_PURCHASEPRICE, KEY_TIME, KEY_DATE}, null, null, null, null, null);
+}
     public Cursor getRecord(long rowID) throws SQLException{
         Cursor oCursor =
-                db.query(true, DATABASE_TABLE, new String[]{KEY_ROWID, KEY_AMOUNTBOUGHT, KEY_COSTBASIS, KEY_FEE, KEY_PURCHASEPRICE, KEY_TIME, KEY_DATE}, KEY_ROWID + "=" + rowID,
+                db.query(true, DATABASE_TABLE, new String[]{KEY_ROWID, KEY_CURRENCY, KEY_AMOUNTBOUGHT, KEY_COSTBASIS, KEY_FEE, KEY_PURCHASEPRICE, KEY_TIME, KEY_DATE}, KEY_ROWID + "=" + rowID,
                         null, null, null, null, null);
 
         if(oCursor != null){
@@ -110,8 +112,9 @@ public class DBManager {
         }
         return oCursor;
     }
-    public boolean updateRecord(long rowID, String amountBought, String costBasis, String fee, String purchasePrice, String time, String date){
+    public boolean updateRecord(long rowID, String currency, String amountBought, String costBasis, String fee, String purchasePrice, String time, String date){
         ContentValues args = new ContentValues();
+        args.put(KEY_CURRENCY, currency);
         args.put(KEY_AMOUNTBOUGHT, amountBought);
         args.put(KEY_COSTBASIS, costBasis);
         args.put(KEY_FEE, fee);

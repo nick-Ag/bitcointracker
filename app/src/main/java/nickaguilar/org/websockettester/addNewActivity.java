@@ -13,6 +13,7 @@ public class addNewActivity extends Activity {
 
     EditText etxtBasis, etxtAmountBought, etxtPurchasePrice;
     DBManager db;
+    String currency = "bitcoin";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +23,13 @@ public class addNewActivity extends Activity {
         etxtPurchasePrice = (EditText)findViewById(R.id.etxtPurchasePrice);
         //temp set purchase price field to invisible
         etxtPurchasePrice.setVisibility(View.INVISIBLE);
+
+        Intent oIntent = getIntent();
+        Bundle b = oIntent.getExtras();
+
+        if(b != null){
+            currency = (String)b.get("currency");
+        }
 
         db = new DBManager(this);
     }
@@ -43,7 +51,7 @@ public class addNewActivity extends Activity {
             Log.d("Status", "Else");
 
             db.open();
-            db.newPurchase(sAmountBought, sBasis, "0", /*purchase price*/String.valueOf(Double.parseDouble(sBasis) / Double.parseDouble(sAmountBought)),
+            db.newPurchase(currency, sAmountBought, sBasis, "0", /*purchase price*/String.valueOf(Double.parseDouble(sBasis) / Double.parseDouble(sAmountBought)),
                     "11:05PM", "12/05/2017");
             db.close();
 
