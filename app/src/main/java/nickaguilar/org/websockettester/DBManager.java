@@ -92,6 +92,10 @@ public class DBManager {
         return db.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowID, null) > 0; // do > 0 so that it returns a bool telling the
         //caller whether or not it was successful. If it returns a greater number it successfully deleted
     }
+    public boolean deletePurchase(String rowID){
+        return db.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowID, null) > 0; // do > 0 so that it returns a bool telling the
+        //caller whether or not it was successful. If it returns a greater number it successfully deleted
+    }
     //get all records
     public Cursor getAllRecords(){ //returns a cursor so that the database can be iterated thru
         return db.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_AMOUNTBOUGHT, KEY_COSTBASIS, KEY_FEE, KEY_PURCHASEPRICE, KEY_TIME, KEY_DATE}, null, null, null, null, null);

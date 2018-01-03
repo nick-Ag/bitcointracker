@@ -43,12 +43,10 @@ public class addNewActivity extends Activity {
             Log.d("Status", "Else");
 
             db.open();
-            db.newPurchase(sAmountBought, sBasis, "0", String.valueOf(Double.parseDouble(sBasis) / Double.parseDouble(sAmountBought)), "11:05PM", "12/05/2017");
+            db.newPurchase(sAmountBought, sBasis, "0", /*purchase price*/String.valueOf(Double.parseDouble(sBasis) / Double.parseDouble(sAmountBought)),
+                    "11:05PM", "12/05/2017");
             db.close();
 
-//            MainActivity main = new MainActivity();
-//            main.db = new DBManager(this);
-//            main.processDataBaseItems();
             Intent oIntent = new Intent();
             setResult(0, oIntent);
 

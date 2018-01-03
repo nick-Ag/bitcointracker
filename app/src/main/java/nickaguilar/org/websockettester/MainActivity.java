@@ -1,4 +1,5 @@
 package nickaguilar.org.websockettester;
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -8,9 +9,11 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -36,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
     double currentOwned = 0;
     double costBasis = 0;
 
+    //Decimal format object initialized to eventually format money values to look nice
+    DecimalFormat number = new DecimalFormat("###,###.00");
+    DecimalFormat bitcoinFormat = new DecimalFormat("###,###.000000");
     //This class handles communications with the websocket
     private final class EchoWebSocketListener extends WebSocketListener {
 
@@ -51,23 +57,23 @@ public class MainActivity extends AppCompatActivity {
         @Override
         //handles what to do when a message is recieved from the websocket
         public void onMessage(WebSocket webSocket, String text) {
-                String price = "", time = ""; //two strings initialized to hold key values from the JSON recieved from the websocket
+            String price = "", time = ""; //two strings initialized to hold key values from the JSON recieved from the websocket
 
-                try {
-                    JSONObject json = new JSONObject(text); //use a JSONObject to parse thru the JSON and grab a couple values
-                    price = json.getString("price"); //get the price value and store it in a string
-                    time = json.getString("time"); //get the time value
+            try {
+                JSONObject json = new JSONObject(text); //use a JSONObject to parse thru the JSON and grab a couple values
+                price = json.getString("price"); //get the price value and store it in a string
+                time = json.getString("time"); //get the time value
 
-                }catch (JSONException e){
-                    e.printStackTrace();
-                }
-                Log.d("Status", price + " " + time); //log the 2 key values recieved from the websocket to the log
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            Log.d("Status", price + " " + time); //log the 2 key values recieved from the websocket to the log
 
-                //the first message recieved from the websocket generally has a null value for price
-                //this makes sure that a null value isn't passed on, which would eventually cause a null string exception when things get calculated
-                if(!price.equals("")) { //only passes on the recieved price if it is not null
-                    output(price); //passes on the price to the main thread for processing
-                }
+            //the first message recieved from the websocket generally has a null value for price
+            //this makes sure that a null value isn't passed on, which would eventually cause a null string exception when things get calculated
+            if (!price.equals("")) { //only passes on the recieved price if it is not null
+                output(price); //passes on the price to the main thread for processing
+            }
         }
 
         @Override
@@ -75,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
             webSocket.close(NORMAL_CLOSURE_STATUS, null);
             output("Closing : " + code + " / " + reason);
         }
+
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             output("Error : " + t.getMessage());
@@ -88,11 +95,11 @@ public class MainActivity extends AppCompatActivity {
 
         //initializes each view
         txtPrice = (TextView) findViewById(R.id.price);
-        txtCostBasis = (TextView)findViewById(R.id.txtCostBasis);
-        txtAmountOwned = (TextView)findViewById(R.id.txtAmountOwned);
-        txtValue = (TextView)findViewById(R.id.txtValue);
-        txtProfit = (TextView)findViewById(R.id.txtProfit);
-        txtPercentProfit = (TextView)findViewById(R.id.txtPercentProfit);
+        txtCostBasis = (TextView) findViewById(R.id.txtCostBasis);
+        txtAmountOwned = (TextView) findViewById(R.id.txtAmountOwned);
+        txtValue = (TextView) findViewById(R.id.txtValue);
+        txtProfit = (TextView) findViewById(R.id.txtProfit);
+        txtPercentProfit = (TextView) findViewById(R.id.txtPercentProfit);
 
         //Initialize each textView with loading text
         txtPrice.setText("Price: Loading...");
@@ -113,57 +120,88 @@ public class MainActivity extends AppCompatActivity {
 
         //Gets the current stored purchase details
         processDataBaseItems();
-
-        //testing dynamically adding rows to table layout//
-        TableLayout table = (TableLayout)findViewById(R.id.tableMain);
-        TableRow row = new TableRow(this);
-        TableRow.LayoutParams layout = new TableRow.LayoutParams(TableRow.LayoutParams.FILL_PARENT);
-        layout.gravity = Gravity.CENTER;
-        row.setLayoutParams(layout);
-
-        //testing how to layout the table programmatically
-        TextView viewAmountBought = new TextView(this);
-            viewAmountBought.setText("100t");
-        TextView viewCostBasis = new TextView(this);
-            viewCostBasis.setText("10,000t");
-        TextView viewDate = new TextView(this);
-            viewDate.setText("12/07/2017");
-        Button deleteButton = new Button(this);
-            deleteButton.setText("Delete");
-        row.addView(viewAmountBought);
-        row.addView(viewCostBasis);
-        row.addView(viewDate);
-        row.addView(deleteButton);
-
-        table.addView(row);
-
-
     }
 
     //method will open the database, then retrieve all records. It will sum the amount of bitcoin bought, and the amount the user has spent on that bitcoin
-    public void processDataBaseItems(){
+    public void processDataBaseItems() {
+        TableLayout table = (TableLayout) findViewById(R.id.tableMain);
+
         db.open();
 
         currentOwned = 0;
         costBasis = 0;
 
         Cursor c = db.getAllRecords();
-        if(c.moveToFirst()){
-            while(c.moveToNext()){
-                if(!c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the string is not empty...
+        if (c.moveToFirst()) {
+            while (c.moveToNext()) {
+                if (!c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the string is not empty...
+
                     currentOwned += Double.parseDouble(c.getString(c.getColumnIndex("amountBought"))); // sum each purchase
                     costBasis += Double.parseDouble(c.getString(c.getColumnIndex("costBasis")));
+
+                    Double amountBought = Double.parseDouble(c.getString(c.getColumnIndex("amountBought")));
+                    Double purchaseCost = Double.parseDouble(c.getString(c.getColumnIndex("costBasis")));
+
+                    TableRow row = new TableRow(this);
+                    TableRow.LayoutParams layout = new TableRow.LayoutParams(TableRow.LayoutParams.FILL_PARENT);
+                    layout.gravity = Gravity.CENTER;
+                    row.setLayoutParams(layout);
+
+                    TextView viewAmountBought = new TextView(this);
+                    viewAmountBought.setText(bitcoinFormat.format(amountBought));
+                    TextView viewCostBasis = new TextView(this);
+                    viewCostBasis.setText(number.format(purchaseCost));
+                    TextView viewDate = new TextView(this);
+                    viewDate.setText("12/07/2017");
+                    Button deleteButton = new Button(this);
+                    deleteButton.setText("Delete");
+
+                    deleteButton.setTag(c.getString(c.getColumnIndex("_id")));
+                    deleteButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View oView) {
+                            //will delete the corresponding purchase record listing
+
+                            //first pop up a "are you sure dialog"
+
+                            //if they are sure
+                            //delete the row in the table
+                            View thisRow = (View)oView.getParent();
+                            ((ViewGroup)thisRow).removeAllViews();
+                            //delete the listing from the database
+
+                            db.open();
+                            db.deletePurchase((String)oView.getTag());
+                            db.close();
+
+                            //redo the processDatabase items, so that the costBasis, and amountBought global variables dont include the purchase the user just deleted
+                            //processDataBaseItems();
+                            //else
+                            //close the dialog and do nothing
+                        }
+                    });
+
+
+
+                    row.addView(viewAmountBought);
+                    row.addView(viewCostBasis);
+                    row.addView(viewDate);
+                    row.addView(deleteButton);
+
+                    Log.d("DB", c.getString(c.getColumnIndex("_id")));
+
+                    //add a row for the purchase to the table layout
+                    table.addView(row);
                 }
             }
         }
         Log.d("Debug", String.valueOf(currentOwned));
         Log.d("Debug", String.valueOf(costBasis));
-
         db.close();
     }
 
     String lastPrice = ""; //holds the last price of BTC to compare to the new price
-//    final double currentOwned = 0.1450855; //hardcoded values for amount owned and cost basis, will change
+    //    final double currentOwned = 0.1450855; //hardcoded values for amount owned and cost basis, will change
 //    final double costBasis = 1000;          //to be user defined
     //initializes value, profits, and price to 0
     double currentValue = 0;
@@ -171,19 +209,16 @@ public class MainActivity extends AppCompatActivity {
     double dPrice = 0;
     double percentProfit = 0;
 
-    //Decimal format object initialized to eventually format money values to look nice
-    DecimalFormat number = new DecimalFormat("###,###.00");
-
     private void output(final String txt) { //this method handles all processing when a new price is received
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(!txt.equals(lastPrice)) { //if the price is the same as the last price processed, do nothing and save some processing power
+                if (!txt.equals(lastPrice)) { //if the price is the same as the last price processed, do nothing and save some processing power
 
                     dPrice = Double.parseDouble(txt); //hold the incoming price as a double
                     txtPrice.setText("Price: $" + number.format(dPrice)); //set the text to the new price
 
-                    if(!lastPrice.equals("")) { //if the last price is null, dont do anything
+                    if (!lastPrice.equals("")) { //if the last price is null, dont do anything
 
                         if (dPrice > Double.parseDouble(lastPrice)) { //if the price just went up, change the color to green
                             txtPrice.setTextColor(Color.GREEN);
@@ -195,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
                     //calculate the profits and value and output that all
                     currentValue = currentOwned * dPrice; //current total value of investment is the current price * amount owned
                     profit = currentValue - costBasis; //current profit is current value - initial costs
-                    percentProfit = 100 * ( (currentValue - costBasis) / costBasis );
+                    percentProfit = 100 * ((currentValue - costBasis) / costBasis);
 
                     //set all the views to reflect the new calculated values
                     txtCostBasis.setText("Cost Basis:\t\t $" + number.format(costBasis));
@@ -210,8 +245,7 @@ public class MainActivity extends AppCompatActivity {
 
                     //log the price
                     Log.d("Message", txtPrice.getText().toString());
-                }
-                else{//if the newly updated price is the same as the previous, don't do anything
+                } else {//if the newly updated price is the same as the previous, don't do anything
                     Log.d("Message", "Same as before");
                 }
 
@@ -221,19 +255,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void btnAdd_onClick(View oView){
+    public void btnAdd_onClick(View oView) {
         Intent oIntent = new Intent("org.nickaguilar.websockettester.addNewActivity");
         startActivityForResult(oIntent, 1);
     }
+
 
     //When the addNewActivity finishes, this method fires
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if(resultCode == 0){ //if the user entered values for cost and amount bought...
+        if (resultCode == 0) { //if the user entered values for cost and amount bought...
             Log.d("Debug", "inside onActivityResult");
             processDataBaseItems();
         }
     }
-
 }

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="nickaguilar.org.websockettester.MainActivity">
@@ -102,47 +101,67 @@
         android:layout_marginTop="8dp"
         android:onClick="btnAdd_onClick"
         android:text="Add New Purchase"
-        app:layout_constraintBottom_toTopOf="@+id/tableMain"
+        app:layout_constraintBottom_toTopOf="@+id/scrollContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtPercentProfit" />
 
-    <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/tableMain"
-        android:layout_width="fill_parent"
-        android:layout_height="193dp"
+
+    <ScrollView
+        android:id="@+id/scrollContainer"
+        android:layout_width="match_parent"
+        android:layout_height="241dp"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:stretchColumns="0,1,2,3">
-        <TableRow
-            android:id="@+id/titleBar"
-            android:layout_width="fill_parent">
+        app:layout_constraintStart_toStartOf="parent">
 
-            <TextView
-                android:id="@+id/titleAmountBought"
-                android:layout_column="0"
-                android:text="Amount Bought" />
+        <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/tableMain"
+            android:layout_width="fill_parent"
+            android:layout_height="239dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:stretchColumns="0,1,2,3"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
-            <TextView
-                android:id="@+id/titleCostBasis"
-                android:layout_column="1"
-                android:text="Cost(USD)"/>
-            <TextView
-                android:id="@+id/titleDate"
-                android:layout_column = "2"
-                android:text="Date"/>
+            <TableRow
+                android:id="@+id/titleBar"
+                android:layout_width="fill_parent">
+
+                <TextView
+                    android:id="@+id/titleAmountBought"
+                    android:layout_column="0"
+                    android:text="Amount Bought" />
+
+                <TextView
+                    android:id="@+id/titleCostBasis"
+                    android:layout_column="1"
+                    android:text="Cost(USD)" />
+
+                <TextView
+                    android:id="@+id/titleDate"
+                    android:layout_column="2"
+                    android:text="Date" />
 
 
-        </TableRow>
+            </TableRow>
 
-        <ScrollView>
 
-        </ScrollView>
+        </TableLayout>
+    </ScrollView>
 
-    </TableLayout>
+        <android.support.design.widget.BottomNavigationView
+            android:id="@+id/bottom_nav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:itemBackground="@color/colorPrimary"
+            app:menu="@menu/bottom_navigation_main" />
 
 </android.support.constraint.ConstraintLayout>
