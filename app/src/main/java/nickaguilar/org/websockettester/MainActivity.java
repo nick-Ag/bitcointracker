@@ -111,8 +111,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //currentCurrencyViewed = "bitcoin";
-
         //initializes each view
         txtPrice = (TextView) findViewById(R.id.price);
         txtCostBasis = (TextView) findViewById(R.id.txtCostBasis);
@@ -149,32 +147,46 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean onNavigationItemSelected(@NonNull MenuItem item){
 
-                        switch (item.getItemId()){
-                            case R.id.menu_btc:
-                                //stuff
-                                currentCurrencyViewed = "bitcoin";
-                                client.dispatcher().cancelAll();
-                                client.newWebSocket(request, listener);
-                                break;
-                            case R.id.menu_bcash:
-                                //stuff
-                                currentCurrencyViewed = "bitcoincash";
-                                client.dispatcher().cancelAll();
-                                client.newWebSocket(request, listener);
-                                break;
-                            case R.id.menu_eth:
-                                //more stuff
-                                currentCurrencyViewed = "ethereum";
-                                client.dispatcher().cancelAll();
-                                client.newWebSocket(request, listener);
-                                break;
+                        String sTitle = item.getTitle().toString().toLowerCase().replaceAll("\\s+","");
+                        Log.d("Var", sTitle);
+
+                        //If the title from the pressed item doesnt equal the current title, do the stuff
+                        if(!sTitle.equals(currentCurrencyViewed)) {
+                            switch (item.getItemId()) {
+
+                                case R.id.menu_btc:
+                                    currentCurrencyViewed = "bitcoin"; //set the current viewed, when the websocket reconnects it will fetch this currencies price
+                                    client.dispatcher().cancelAll(); //cancel the current connection with the websocket
+                                    client.newWebSocket(request, listener); //reconnect the websocket
+                                    break;
+                                case R.id.menu_bcash:
+                                    currentCurrencyViewed = "bitcoincash";
+                                    client.dispatcher().cancelAll();
+                                    client.newWebSocket(request, listener);
+                                    break;
+                                case R.id.menu_eth:
+                                    currentCurrencyViewed = "ethereum";
+                                    client.dispatcher().cancelAll();
+                                    client.newWebSocket(request, listener);
+                                    break;
+                            }
+                            nukeTableLayout();
+                            processDataBaseItems();
                         }
-                        Log.d("Currency", currentCurrencyViewed);
-                        return true;
+                            Log.d("Currency", currentCurrencyViewed);
+                            return true;
                     }
                 });
     }
 
+    //Function will remove every listing from the tablelayout so that
+    //it can be reloaded. Doesn't remove anything from the DB
+    public void nukeTableLayout(){
+
+        TableLayout table = (TableLayout)findViewById(R.id.tableMain);
+        table.removeAllViews();
+
+    }
     //method will open the database, then retrieve all records. It will sum the amount of bitcoin bought, and the amount the user has spent on that bitcoin
     public void processDataBaseItems() {
         TableLayout table = (TableLayout) findViewById(R.id.tableMain);
@@ -189,6 +201,8 @@ public class MainActivity extends AppCompatActivity {
             while (c.moveToNext()) {
                 if ( c.getString(c.getColumnIndex("currency")).equals(currentCurrencyViewed)
                         && !c.getString(c.getColumnIndex("amountBought")).equals("")) { //if the record is the same as currentViewedCurrency and is not null
+
+                    Log.d("Database", c.getColumnIndex("_id") + "\t\t" + c.getColumnIndex("currency") + "\t" + c.getColumnIndex("amountBought"));
 
                     currentOwned += Double.parseDouble(c.getString(c.getColumnIndex("amountBought"))); // sum each purchase
                     costBasis += Double.parseDouble(c.getString(c.getColumnIndex("costBasis")));
@@ -229,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                             db.close();
 
                             //redo the processDatabase items, so that the costBasis, and amountBought global variables dont include the purchase the user just deleted
-                            //processDataBaseItems();
+                            processDataBaseItems();
                             //else
                             //close the dialog and do nothing
                         }
@@ -315,8 +329,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //When the add new purchase button is clicked, this method starts the addNewActivity activty
     public void btnAdd_onClick(View oView) {
         Intent oIntent = new Intent("org.nickaguilar.websockettester.addNewActivity");
+        //passes the current currency to the activity so it knows what currency type it is adding
         oIntent.putExtra("currency", currentCurrencyViewed);
         startActivityForResult(oIntent, 1);
     }

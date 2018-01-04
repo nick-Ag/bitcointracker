@@ -7,11 +7,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class addNewActivity extends Activity {
 
     EditText etxtBasis, etxtAmountBought, etxtPurchasePrice;
+    TextView txtTitle;
     DBManager db;
     String currency = "bitcoin";
 
@@ -21,6 +23,7 @@ public class addNewActivity extends Activity {
         setContentView(R.layout.activity_add_new);
 
         etxtPurchasePrice = (EditText)findViewById(R.id.etxtPurchasePrice);
+        txtTitle = (TextView)findViewById(R.id.txtTitle);
         //temp set purchase price field to invisible
         etxtPurchasePrice.setVisibility(View.INVISIBLE);
 
@@ -29,6 +32,7 @@ public class addNewActivity extends Activity {
 
         if(b != null){
             currency = (String)b.get("currency");
+            txtTitle.setText("Enter new " + currency + " purchase details.");
         }
 
         db = new DBManager(this);
