@@ -162,6 +162,8 @@
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
             app:itemBackground="@color/colorPrimary"
+            app:itemTextColor="@color/white"
+            app:itemIconTint="@color/white"
             app:menu="@menu/bottom_navigation_main" />
 
 </android.support.constraint.ConstraintLayout>

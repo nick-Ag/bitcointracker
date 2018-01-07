@@ -106,11 +106,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+    //simple method to set the text of each textView to "loading..." when the app is waiting for a new price
+    public void setTextToLoading(){
         //initializes each view
         txtPrice = (TextView) findViewById(R.id.price);
         txtCostBasis = (TextView) findViewById(R.id.txtCostBasis);
@@ -126,6 +123,15 @@ public class MainActivity extends AppCompatActivity {
         txtValue.setText("Current Total Value: Loading...");
         txtProfit.setText("Current Profit: Loading...");
         txtPercentProfit.setText("% Profit: Loading...");
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        //set all the text views to "loading..." while the price loads
+        setTextToLoading();
 
         //initializes the client, and connects to the websocket
         client = new OkHttpClient();
@@ -152,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
                         //If the title from the pressed item doesnt equal the current title, do the stuff
                         if(!sTitle.equals(currentCurrencyViewed)) {
+                            setTextToLoading();
                             switch (item.getItemId()) {
 
                                 case R.id.menu_btc:
@@ -184,9 +191,11 @@ public class MainActivity extends AppCompatActivity {
     public void nukeTableLayout(){
 
         TableLayout table = (TableLayout)findViewById(R.id.tableMain);
-        table.removeAllViews();
-
+        TableRow titleBar = (TableRow)table.getChildAt(0); //saves the title bar so it can be re-added after the nuke
+        table.removeAllViews(); //nuke table
+        table.addView(titleBar); //readd the titlebar
     }
+
     //method will open the database, then retrieve all records. It will sum the amount of bitcoin bought, and the amount the user has spent on that bitcoin
     public void processDataBaseItems() {
         TableLayout table = (TableLayout) findViewById(R.id.tableMain);
